@@ -210,6 +210,12 @@ int main(int argc, char **argv)
 		readingTime=mktime(&tm);
 		
 		slot = (difftime(readingTime, minTime)/(60*15));
+
+		for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
+		{
+			frequencies[frequencyCounter].reading[slot].level = -127 ;
+		}		
+		
 		
 		// wander up the frequency list until we get to the frequency we have found 
 		for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )

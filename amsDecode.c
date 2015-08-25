@@ -11,12 +11,12 @@
 #include "licenseProcessing.h"
 
 
-#define VERSION 0.1
+#define VERSION 0.3
 #define GNUPLOT "gnuplot -persist"
 
 #define LICENSE_DB_EN 0
 #define GNUPLOT_EN 0
-#define HITS_DB_LEN 5000000
+#define HITS_DB_LEN 10000000
 #define HIT_THRESHOLD -80
 #define CHANNEL_DB_LEN 100000
 #define CHANNEL_THRESHOLD -90
@@ -268,15 +268,6 @@ int saveSingleFrequency ( hitsStruct array[] )
 	return (0);
 }
 
-
-
-
-
-
-
-
-
-
 void displayHelp(void)
 {
 	printf("Decoder for AMSDrive .bin files. Usage: amsDecode [options] <binfile.bin>  [start Fx], [stop FX]\n");
@@ -483,12 +474,12 @@ int main(int argc, char *argv[])
 
 
 	fread(&version,sizeof(version),1,fh);       //printf("Version, %d\n", version);
-	fread(&startFreq,sizeof(startFreq),1,fh);   printf("Start Frequency, %gMHz\n", startFreq/1000000);
-	fread(&stopFreq,sizeof(stopFreq),1,fh);     printf("Stop  Frequency, %gMHz\n", stopFreq/1000000);
-	fread(&span,sizeof(span),1,fh);         	printf("Span %gMHz\n",span/1000000 );
-	fread(&fftSize,sizeof(fftSize),1,fh);       printf("FFT Size, %d\n", fftSize ); 
+	fread(&startFreq,sizeof(startFreq),1,fh);   //printf("Start Frequency, %gMHz\n", startFreq/1000000);
+	fread(&stopFreq,sizeof(stopFreq),1,fh);     //printf("Stop  Frequency, %gMHz\n", stopFreq/1000000);
+	fread(&span,sizeof(span),1,fh);         	//printf("Span %gMHz\n",span/1000000 );
+	fread(&fftSize,sizeof(fftSize),1,fh);       //printf("FFT Size, %d\n", fftSize ); 
 	fread(&averages,sizeof(averages),1,fh);     //printf("Number of averages, %d\n", averages);
-	fread(&gpsSource,sizeof(gpsSource),1,fh);   printf("GPS Source, %d\n", gpsSource );
+	fread(&gpsSource,sizeof(gpsSource),1,fh);   //printf("GPS Source, %d\n", gpsSource );
 	
 	
 	// set up an array for occupancy - only allocate for bins we are interested in
@@ -496,9 +487,14 @@ int main(int argc, char *argv[])
 	{
 		freqRbw = (float)28000000/fftSize; 						// We seem to be calculating RBW given a 28MHz span rather than the reported 10MHz; Humph !
 	}
+	else if (span == 5000000 )
+	{
+		freqRbw = (float)14000000/fftSize; 						
+	}
 	else
 	{
-		freqRbw = 56000000/fftSize; 						
+		printf("Error, span is neither 5MHz nor 10MHz, something weird is going on here. I blame Agilent. Span : %gMHz", span );
+		exit(1);
 	}
 	
 	arraySize = (float)((stopFx-startFx) /freqRbw);		// we can work out the array size from the freq range and bin size
@@ -565,6 +561,7 @@ int main(int argc, char *argv[])
 	{
 		for ( i=0; i < MAX_SPECTRA; i++ )
 		{
+
 			singleFrequencyArray[i].frequency = 0;
 		} 
 	}
@@ -590,8 +587,7 @@ int main(int argc, char *argv[])
 		fread(&LatPosition,sizeof(LatPosition),1,fh);     //printf("%f,", LatPosition);
 		fread(&LonPosition,sizeof(LonPosition),1,fh);     //printf("%f\n", LonPosition);
 		
-		//xmlLocation ( LatPosition, LonPosition );
-		
+
 		fread(&elevation,sizeof(elevation),1,fh);       // printf("Elevation: %f\n", elevation);
 		fread(&speed,sizeof(speed),1,fh);           //printf("Speed: %f\n", speed );
 		fread(&bearing,sizeof(bearing),1,fh);       // printf("Bearing: %f\n",bearing );
@@ -610,7 +606,7 @@ int main(int argc, char *argv[])
 			fread(&ampPoints,sizeof(ampPoints2),1,fh);       	//printf("Amplitude Points: %d,",ampPoints2 );
 		}
 		fread(&numAve,sizeof(numAve),1,fh);         		//printf("Number of averages: %d\n",numAve );
-		fread(&overload,sizeof(overload),1,fh);     		// printf("Overload: %d\n", overload);
+		fread(&overload,sizeof(overload),1,fh);     		 //printf("Overload: %d\n", overload);
 		fread(&ampPoints,sizeof(ampPoints),1,fh);     		//printf("Amplitude Points(2): %d\n",ampPoints );
 
 		//printf("ampPoints: %d, ampPoints2: %d, binsPerSegment %d\n",ampPoints, ampPoints2, binsPerSpan);
@@ -638,7 +634,8 @@ int main(int argc, char *argv[])
 
 				if ( binCounter > arraySize )
 				{
-					printf("error binCounter greater than array size %d %d\n", binCounter, arraySize );
+					printf("error binCounter greater than array size; binCounter:%d, arraySize:%d\n", binCounter, arraySize );
+					exit(1);
 				}
 				else
 				{  
