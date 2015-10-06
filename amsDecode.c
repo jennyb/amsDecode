@@ -469,9 +469,6 @@ int main(int argc, char *argv[])
 		} 
 	}
 	
-	
-	printf("\n");
-
 
 	fread(&version,sizeof(version),1,fh);       //printf("Version, %d\n", version);
 	fread(&startFreq,sizeof(startFreq),1,fh);   //printf("Start Frequency, %gMHz\n", startFreq/1000000);
@@ -481,6 +478,7 @@ int main(int argc, char *argv[])
 	fread(&averages,sizeof(averages),1,fh);     //printf("Number of averages, %d\n", averages);
 	fread(&gpsSource,sizeof(gpsSource),1,fh);   //printf("GPS Source, %d\n", gpsSource );
 	
+	printf("bin file; Version:%d, StartFx:%gMHz, StopFx:%gMHz, SegmentSpan:%gMHz, fft:%d  \n", version, startFreq/1000000, stopFreq/1000000, span/1000000, fftSize );
 	
 	// set up an array for occupancy - only allocate for bins we are interested in
 	if ( span == 10000000 ) 
@@ -609,7 +607,7 @@ int main(int argc, char *argv[])
 		fread(&overload,sizeof(overload),1,fh);     		 //printf("Overload: %d\n", overload);
 		fread(&ampPoints,sizeof(ampPoints),1,fh);     		//printf("Amplitude Points(2): %d\n",ampPoints );
 
-		//printf("ampPoints: %d, ampPoints2: %d, binsPerSegment %d\n",ampPoints, ampPoints2, binsPerSpan);
+		printf("Latitude: %f, Longitude: %f, ampPoints: %d, ampPoints2: %d, binsPerSegment %d, RBW: %fkHz \n",LatPosition, LonPosition, ampPoints, ampPoints2, binsPerSpan, freqRbw/1000);
 		
 		if ( overload )
 		{
@@ -634,7 +632,8 @@ int main(int argc, char *argv[])
 
 				if ( binCounter > arraySize )
 				{
-					printf("error binCounter greater than array size; binCounter:%d, arraySize:%d\n", binCounter, arraySize );
+					printf("error binCounter greater than array size; binCounter:%d, arraySize:%d fftSize:%d\n", binCounter, arraySize, fftSize );
+					//binCounter++;
 					exit(1);
 				}
 				else

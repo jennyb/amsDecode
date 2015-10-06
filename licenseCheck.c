@@ -270,14 +270,6 @@ int saveSingleFrequency ( hitsStruct array[] )
 }
 
 
-
-
-
-
-
-
-
-
 void displayHelp(void)
 {
 	printf("Decoder for AMSDrive .bin files. Usage: amsDecode [options] <binfile.bin>  [start Fx], [stop FX]\n");
@@ -298,11 +290,8 @@ void displayHelp(void)
 /**************************************************************************** 
 * NAME:        	main                                   
 * DESCRIPTION: 
-* ARGUMENTS:   	-s spectrum number to export
-* 				-l compare to license database
-* 				-k output kml
-* 				-b bottom frequency
-* 				-t top frequency 
+* ARGUMENTS:   	-h  returns help
+* 				
 * RETURNS:     	0
 ***************************************************************************/
 int main(int argc, char *argv[])
@@ -368,17 +357,20 @@ int main(int argc, char *argv[])
 		exit(1);
 	}		
 
-	fgets (str, HIT_LINE_LEN, fh);
-	ptr = strtok(str, ",");
-	//printf( "Frequency:  %s\n", ptr );
-	ptr = strtok(NULL, ",");
-	//printf( "Level:  %s\n", ptr );	
-	ptr = strtok(NULL, ",");	
-	//printf( "Lat %s\n", ptr );
-	lat = atof ( ptr );
-	ptr = strtok(NULL, ",");	
-	//printf( "Lon %s\n", ptr ); 
-	lng = atof ( ptr );
+	if ( fgets (str, HIT_LINE_LEN, fh) != NULL )
+	{
+		ptr = strtok(str, ",");
+		//printf( "Frequency:  %s\n", ptr );
+		ptr = strtok(NULL, ",");
+		//printf( "Level:  %s\n", ptr );	
+		ptr = strtok(NULL, ",");	
+		//printf( "Lat %s\n", ptr );
+		lat = atof ( ptr );
+		ptr = strtok(NULL, ",");	
+		//printf( "Lon %s\n", ptr ); 
+		lng = atof ( ptr );
+	}		
+	  
 	
 	validSignalsTotal = openLicenseCsv( validSignals, lat, lng );
 	printf("Found  %d license records within %dkm of the sensor location at %f and %f\n",validSignalsTotal,LICENSE_DISTANCE, lat, lng);	

@@ -186,23 +186,33 @@ int signalCmpFunc ( const void *arg1, const void *arg2)
 
 /**************************************************************************** 
 * NAME:        openLicenseCsv                                    
-* DESCRIPTION: 
+* DESCRIPTION: Opens two .csv files : license1.csv containing fixed licenses and license2.csv containing area defined licenses. 
 * ARGUMENTS:    
 * RETURNS:     0
 ***************************************************************************/ 
 uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng) 
 {
-	char str[LICENSE_LINE_LEN];
+	char str[LICENSE_LINE_LEN]; 
+	char str1[LICENSE_LINE_LEN]; 
 	char *ptr;
-	double signalLatitude, signalLongitude, signalPower, signalHeight, signalFrequency;
-	double signalDistance;	
+	double licenseLatitude, licenseLongitude, licensePower, licenseHeight, licenseFrequency;
+	double licenseDistance;	
 	uint32_t frequencyCounter=0;
 	char locationString[100];
 	char country1[20], country2[2];
 	char ngr[10];
 	
+	// create a file with all the frequencies within 50km that might be busy and will therefore be excluded ( for debug only - not actually used )
+	FILE *fDebug = fopen("debug_licenses_found.csv","w");
+	if (!fDebug) 
+	{
+		printf("Can't open file debug_licenses_found.csv\n");
+		exit(1);
+	}
+	
 	
 	//Firstly open the fixed license database
+	//Licence number,Latitude (number),Longitude (number),Station Type,Antenna erp,Antenna height,Frequency,Licence state,Height asl,Product
 	//"0000000/1","55.8123456","-3.84123456","Base station","25","8","141.825","Live","261","312345 - Coastal Station Radio (Hobbes)"," "
 	FILE *fh = fopen("license1.csv","rb");
 	if (!fh) 
@@ -210,50 +220,82 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 		printf("Can't open file license1.csv\n");
 		exit(1);
 	}
-	if ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
-	{
-		//puts(str);
-	}
-	while ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
-	{
-		if ( strlen ( str ) > 100 )
-		{
-			ptr = strtok(str, ",");
-			//printf( " %s\n", ptr );
-			ptr = strtok(NULL, ",");
-			signalLatitude = atof(ptr+1);
-			ptr = strtok(NULL, ",");
-			signalLongitude = atof(ptr+1);
-			ptr = strtok(NULL, ",");
-			ptr = strtok(NULL, ",");
-			signalPower = atof(ptr+1);		
-			ptr = strtok(NULL, ",");	
-			signalHeight = atof(ptr+1);		
-			ptr = strtok(NULL, ",");
-			signalFrequency = 1000000 * atof(ptr+1);	
-			//printf("%f \t %f \t %fMHz \t %dw \t %dm\n", array[counter].latitude,array[counter].longitude, array[counter].frequency, array[counter].power, array[counter].height); 	
 
-			if ( ! signalHeight || ! signalPower )
+
+	if ( fgets (str, LICENSE_LINE_LEN, fh) != NULL ) 
+	{
+		if ( strstr(str, "Licence number") != NULL )
+		{
+			while ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
 			{
-				//printf("License Database query Height %f, Power %f\n", signalHeight, signalPower); 
-			}
-			
-			signalDistance = geoDistance( lat,lng, signalLatitude, signalLongitude,'K');
-			//printf("Signal Distance: %f, lat %f,lng %f, signalLatitude %f, signalLongitude %f\n", signalDistance, lat,lng, signalLatitude, signalLongitude );     
-			
-			if ( signalDistance < LICENSE_DISTANCE )
-			{
-				list[frequencyCounter].lowFrequency = (signalFrequency - (CHANNEL_SPACE/2)) ;
-				list[frequencyCounter].highFrequency = (signalFrequency + (CHANNEL_SPACE/2)) ;
-				//printf("Signal Distance: %f, Low Frequency: %f, high Frequency: %f\n", signalDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
-				frequencyCounter++;			
-			}
-		}
+				if ( strlen ( str ) > 50 )
+				{
+					strcpy(str1,str);
+					//printf("%s",str);
+					ptr = strtok(str, ","); 
+					ptr = strtok(NULL, ",");  // License Number
+					licenseLatitude = atof(ptr); // Lat
+					//printf( " %f", licenseLatitude );
+					ptr = strtok(NULL, ","); // Long
+					licenseLongitude = atof(ptr);
+					//printf( "  %f", licenseLongitude );
+					ptr = strtok(NULL, ","); // Type ( Base Station )
+					ptr = strtok(NULL, ","); // Power ERP
+					licensePower = atof(ptr);		
+					ptr = strtok(NULL, ","); // Height
+					licenseHeight = atof(ptr);	// 	
+					ptr = strtok(NULL, ",");  // Frequency
+					licenseFrequency = 1000000 * atof(ptr);	
+					//printf( "  %fMHz\n", licenseFrequency/1000000 );
+
+					//validate data
+					if ( licenseLatitude < SOUTH_MOST_LICENSE || licenseLatitude > NORTH_MOST_LICENSE )
+					{
+						printf("Latitude Error:  licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
+					}
+					if ( licenseLongitude < WEST_MOST_LICENSE || licenseLongitude > EAST_MOST_LICENSE )
+					{
+						printf("Longitude Error: licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
+					}
+
+					if ( ! licenseHeight || ! licensePower )
+					{
+						//printf("License Database query Height %f, Power %f\n", licenseHeight, licensePower); 
+					}
+					
+					licenseDistance = geoDistance( lat,lng, licenseLatitude, licenseLongitude,'K');
+					// printf("license Distance: %f, lat %f,lng %f, licenseLatitude %f, licenseLongitude %f\n", licenseDistance, lat,lng, licenseLatitude, licenseLongitude );     
+					
+					if ( licenseDistance < LICENSE_DISTANCE )
+					{
+						list[frequencyCounter].lowFrequency = (licenseFrequency - (CHANNEL_SPACE/2)) ;
+						list[frequencyCounter].highFrequency = (licenseFrequency + (CHANNEL_SPACE/2)) ;
+						// printf("license Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
+						fprintf(fDebug,"License Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
+						frequencyCounter++;			
+					}
+					//else // Debug only 
+					//{
+						//fprintf(fDebug,"Rejected : license Distance:%f, amsLat:%f, amsLong:%f, licenseLatitude %f, licenseLongitude %f, Low Frequency:%f, high Frequency:%f\n", licenseDistance, lat, lng, licenseLatitude, licenseLongitude, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
+					//}	
+				}
+				else
+				{
+					fclose(fh);
+				}
+			} // while there are more lines
+		} // first line contains "License Number"
 		else
 		{
-			fclose(fh);
-		}
-	}
+			printf("Incorrect first line in license1.csv. Was expecting lat/long based licenses starting with the first line of License Number, Instead got %s\n", str);
+			exit(1); 
+		} 
+	}  // Able to get first line of file
+	else
+	{
+		printf("Opened license1.csv but was unable to get the first line\n");
+		exit(1);
+	}	
 	
 	// then open the area licenses
 	//"0038611/2","England","440.89500 MHz","409510 BR Area Assigned","Live"	
@@ -263,69 +305,79 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 		printf("Can't open file license2.csv\n");
 		exit(1);
 	}
+
+
+
+
+
 	if ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
 	{
-		// puts(str);
+		puts(str);
 	}
 	while ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
 	{
-		if ( strlen ( str ) > 50 )
+		if ( strlen ( str ) > 40 )
 		{
-			ptr = strtok(str, ",");
+			ptr = strtok(str, ",");  // License
 			//printf( " %s\n", ptr );
-			ptr = strtok(NULL, ",");
-			//printf( " %s\n", ptr );
+			ptr = strtok(NULL, ","); // Location string 
+			//printf( " %s\n", ptr ); 
 			strcpy ( locationString, ptr );  
+			ptr = strtok(NULL, ","); // Frequency 
+			licenseFrequency = 1000000 * atof(ptr);
 			ptr = strtok(NULL, ",");
-			signalFrequency = 1000000 * atof(ptr+1);
-			ptr = strtok(NULL, ",");
-			if ( strstr ( locationString, "Subsquares" ))
+			//printf("%s\n",locationString);
+			if ( strlen ( locationString) == 3 )
 			{
 				//"NUa - BNG_Subsquares_Geo"
 				//"NUc - BNG_Subsquares_Geo"
-				if ( locationString[3] == 'a' )
+				if ( locationString[2] == 'a' )
 				{
-					sprintf( ngr, "%c%c250750",locationString[1],locationString[2] );
+					sprintf( ngr, "%c%c250750",locationString[0],locationString[1] );
 				}
-				else if ( locationString[3] == 'b' )
+				else if ( locationString[2] == 'b' )
 				{
-					sprintf( ngr, "%c%c750750",locationString[1],locationString[2] );
+					sprintf( ngr, "%c%c750750",locationString[0],locationString[1] );
 				}
-				else if ( locationString[3] == 'c' )
+				else if ( locationString[2] == 'c' )
 				{
-					sprintf( ngr, "%c%c250250",locationString[1],locationString[2] );
+					sprintf( ngr, "%c%c250250",locationString[0],locationString[1] );
+					
 				}
-				else if ( locationString[3] == 'd' )
+				else if ( locationString[2] == 'd' )
 				{
-					sprintf( ngr, "%c%c250750",locationString[1],locationString[2] );
+					sprintf( ngr, "%c%c250750",locationString[0],locationString[1] );
 				}
 				else
 				{
 					printf("ngr lookup failure char: %c string: %s\n",locationString[2], locationString );
 				}	
-				ngr2ll(ngr, &signalLatitude, &signalLongitude);
-				signalDistance = geoDistance( lat,lng, signalLatitude, signalLongitude,'K');
-				//printf("New ngr: %s, %s, distance %f\n",ngr, locationString, signalDistance );
-				if ( signalDistance < LICENSE_DISTANCE )
+				ngr2ll(ngr, &licenseLatitude, &licenseLongitude);
+				licenseDistance = geoDistance( lat,lng, licenseLatitude, licenseLongitude,'K');
+				//printf("New ngr: %s, %s, distance %f\n",ngr, locationString, licenseDistance );
+				if ( licenseDistance < LICENSE_DISTANCE )
 				{
-					list[frequencyCounter].lowFrequency = (signalFrequency - (CHANNEL_SPACE/2)) ;
-					list[frequencyCounter].highFrequency = (signalFrequency + (CHANNEL_SPACE/2)) ;
-					//printf("Signal Distance: %f, Low Frequency: %f, high Frequency: %f\n", signalDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
+					list[frequencyCounter].lowFrequency = (licenseFrequency - (CHANNEL_SPACE/2)) ;
+					list[frequencyCounter].highFrequency = (licenseFrequency + (CHANNEL_SPACE/2)) ;
+					//printf("license Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
+					fprintf(fDebug, "license Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
 					frequencyCounter++;			
 				}
 			}
-			else if ( strstr ( locationString, "United_Kingdom" ) != NULL )
+			else if ( strstr ( locationString, "UK" ) != NULL )
 			{
-				list[frequencyCounter].lowFrequency = (signalFrequency - (CHANNEL_SPACE/2)) ;
-				list[frequencyCounter].highFrequency = (signalFrequency + (CHANNEL_SPACE/2)) ;
+				list[frequencyCounter].lowFrequency = (licenseFrequency - (CHANNEL_SPACE/2)) ;
+				list[frequencyCounter].highFrequency = (licenseFrequency + (CHANNEL_SPACE/2)) ;
 				//printf("Matched UK on license number %d\n",frequencyCounter );
+				fprintf(fDebug, "Matched UK  : license Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
 				frequencyCounter++;	
 			}
 			else if (  strstr( locationString, "England" ) != NULL )
 			{
-				list[frequencyCounter].lowFrequency = (signalFrequency - (CHANNEL_SPACE/2)) ;
-				list[frequencyCounter].highFrequency = (signalFrequency + (CHANNEL_SPACE/2)) ;
-				//printf("Matched England on license number %d\n",frequencyCounter );				
+				list[frequencyCounter].lowFrequency = (licenseFrequency - (CHANNEL_SPACE/2)) ;
+				list[frequencyCounter].highFrequency = (licenseFrequency + (CHANNEL_SPACE/2)) ;
+				// printf("Matched England on license number %d\n",frequencyCounter );	
+				fprintf(fDebug, "Matched England  : license Distance: %f, Low Frequency: %f, high Frequency: %f\n", licenseDistance, list[frequencyCounter].lowFrequency/1000000, list[frequencyCounter].highFrequency/1000000 );     
 				frequencyCounter++;	
 			}
 			
@@ -348,11 +400,11 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 	list[frequencyCounter].highFrequency = 137000000;	
 	frequencyCounter++;
 	list[frequencyCounter].lowFrequency = 144000000;	//2m
-	list[frequencyCounter].highFrequency = 146000000;
+	list[frequencyCounter].highFrequency = 147000000;
 	frequencyCounter++;
-	list[frequencyCounter].lowFrequency = 153000000;	//Pager
-	list[frequencyCounter].highFrequency = 153500000;
-	frequencyCounter++;	
+	//list[frequencyCounter].lowFrequency = 153000000;	//Pager
+	//list[frequencyCounter].highFrequency = 153500000;
+	//frequencyCounter++;	
 	list[frequencyCounter].lowFrequency = 156000000;	//Marine low
 	list[frequencyCounter].highFrequency = 157500000;
 	frequencyCounter++;
@@ -389,8 +441,11 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 		
 	// sort the exclusion database
 	qsort ( list, frequencyCounter, sizeof(signalListStruct), signalCmpFunc); 	
+
+	fclose(fDebug);
 	
 	// debug
+	//uint_fast64_t exclusionCounter;
 	//for ( exclusionCounter = 0 ; exclusionCounter < frequencyCounter; exclusionCounter ++ )
 	//{
 		//printf("Low Frequency: %f, high Frequency: %f\n",list[exclusionCounter].lowFrequency/1000000, list[exclusionCounter].highFrequency/1000000 );     

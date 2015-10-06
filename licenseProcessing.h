@@ -6,6 +6,10 @@
 #define LICENSE_DISTANCE 50
 #define LICENSE_LINE_LEN 200
 #define LICENSE_FILE_LEN 200000
+#define WEST_MOST_LICENSE -9
+#define EAST_MOST_LICENSE 4
+#define NORTH_MOST_LICENSE 62
+#define SOUTH_MOST_LICENSE 48
 
  typedef struct {
 	double 		lowFrequency;
