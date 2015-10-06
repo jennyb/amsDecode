@@ -211,10 +211,10 @@ int main(int argc, char **argv)
 		
 		slot = (difftime(readingTime, minTime)/(60*15));
 
-		for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
-		{
-			frequencies[frequencyCounter].reading[slot].level = -127 ;
-		}		
+		//for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
+		//{
+		//	frequencies[frequencyCounter].reading[slot].level = -127 ;
+		//}		
 		
 		
 		// wander up the frequency list until we get to the frequency we have found 
@@ -227,6 +227,7 @@ int main(int argc, char **argv)
 				frequencies[frequencyCounter].reading[slot].occ++;					
 				if ( rssi > frequencies[frequencyCounter].reading[slot].level )
 				{
+					//printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
 					frequencies[frequencyCounter].reading[slot].level = rssi ;
 				}
 				break; 
