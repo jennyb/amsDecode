@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 		//printf("zero lat lat%f, long%f\n",lat,lng);
 	}		
 	  
-	//set this lat/long as the starting position, the compare this each line and recalculate licenses when we have moved. 
+	//set this lat/long as the starting position, then compare each line and recalculate licenses when we have moved. 
 	startLat = lat;
 	startLng = lng; 
 	  
@@ -389,11 +389,9 @@ int main(int argc, char *argv[])
 
 	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL  ) 
 	{
-		//89.675000, 37.460000, 52.658178, 1.721563, Wed Sep 25 18:29:30 2013
-				
+		//89.675000, 37.460000, 52.658178, 1.721563, Wed Sep 25 18:29:30 2013	
 		ptr = strtok(str, ",");
-		//printf( "Frequency:  %s\n", ptr );
-		binFrequency = atof ( ptr );
+		binFrequency = 1000000 * atof ( ptr );
 		ptr = strtok(NULL, ",");
 		//printf( "Level:  %s\n", ptr );	
 		ptr = strtok(NULL, ",");	
@@ -405,7 +403,7 @@ int main(int argc, char *argv[])
 		
 		if ( lat == 0 )
 		{
-			//printf("zero lat lat%f, long%f\n",lat,lng);
+			printf("zero lat lat%f, long%f\n",lat,lng);
 			continue; // ignore, get the next record
 		}
 		

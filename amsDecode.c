@@ -607,12 +607,12 @@ int main(int argc, char *argv[])
 		fread(&overload,sizeof(overload),1,fh);     		 //printf("Overload: %d\n", overload);
 		fread(&ampPoints,sizeof(ampPoints),1,fh);     		//printf("Amplitude Points(2): %d\n",ampPoints );
 
-		printf("Latitude: %f, Longitude: %f, ampPoints: %d, ampPoints2: %d, binsPerSegment %d, RBW: %fkHz \n",LatPosition, LonPosition, ampPoints, ampPoints2, binsPerSpan, freqRbw/1000);
+		//printf("Latitude: %f, Longitude: %f, ampPoints: %d, ampPoints2: %d, binsPerSegment %d, RBW: %fkHz \n",LatPosition, LonPosition, ampPoints, ampPoints2, binsPerSpan, freqRbw/1000);
 		
 		if ( overload )
 		{
 			spanOverload = 1;
-			printf("Overload flag from Agilent Sensor detected on spectrum number %d. Overload = %d\n",spectrumCount, spanOverload );
+			printf("Overload flag from Agilent Sensor detected on spectrum number %d, frequency Segment %f at location Lat/Long %f,%f\n",spectrumCount,blkStartFx,LatPosition,LonPosition );
 		}
 		
 		for ( i = 0; i < ampPoints ; i++ )
