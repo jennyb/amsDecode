@@ -251,11 +251,11 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 					//validate data
 					if ( licenseLatitude < SOUTH_MOST_LICENSE || licenseLatitude > NORTH_MOST_LICENSE )
 					{
-						printf("Latitude Error:  licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
+						//printf("Latitude Error:  licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
 					}
 					if ( licenseLongitude < WEST_MOST_LICENSE || licenseLongitude > EAST_MOST_LICENSE )
 					{
-						printf("Longitude Error: licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
+						//printf("Longitude Error: licenseLatLong:%f,%f                License:%s", licenseLatitude, licenseLongitude, str1 );
 					}
 
 					if ( ! licenseHeight || ! licensePower )
@@ -312,7 +312,7 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 
 	if ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
 	{
-		puts(str);
+		//puts(str);
 	}
 	while ( fgets (str, LICENSE_LINE_LEN, fh) !=NULL ) 
 	{

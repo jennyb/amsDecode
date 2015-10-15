@@ -24,6 +24,7 @@
 #define MAX_SPECTRA 20000
 #define WBFM_CHANNEL_HALF 100000
 #define HIT_LINE_LEN 100
+#define AMS_LOCATION_MOVE_DISTANCE 5
 
 
 
@@ -296,7 +297,7 @@ void displayHelp(void)
 ***************************************************************************/
 int main(int argc, char *argv[])
 {
-	float lat, lng;
+	double lat, lng, startLat, startLng, distance ;
 	double binFrequency;
 	char str[HIT_LINE_LEN];
 	char *ptr;
@@ -357,7 +358,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}		
 
-	if ( fgets (str, HIT_LINE_LEN, fh) != NULL )
+	// from the first line of the specData file, extract the starting Latitude and Longitude
+	while  ( fgets (str, HIT_LINE_LEN, fh) != NULL )
 	{
 		ptr = strtok(str, ",");
 		//printf( "Frequency:  %s\n", ptr );
@@ -369,19 +371,53 @@ int main(int argc, char *argv[])
 		ptr = strtok(NULL, ",");	
 		//printf( "Lon %s\n", ptr ); 
 		lng = atof ( ptr );
+		if ( lat != 0 )
+		{
+			break; // we are rather UK centric here. Ignore latitude zero, but of course accept longitude of zero )
+		}
+		//printf("zero lat lat%f, long%f\n",lat,lng);
 	}		
+	  
+	//set this lat/long as the starting position, the compare this each line and recalculate licenses when we have moved. 
+	startLat = lat;
+	startLng = lng; 
 	  
 	
 	validSignalsTotal = openLicenseCsv( validSignals, lat, lng );
 	printf("Found  %d license records within %dkm of the sensor location at %f and %f\n",validSignalsTotal,LICENSE_DISTANCE, lat, lng);	
 
 
-
-	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL ) 
+	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL  ) 
 	{
 		//89.675000, 37.460000, 52.658178, 1.721563, Wed Sep 25 18:29:30 2013
-		binFrequency = 1000000 * atof ( str );
-		//printf("Frequency %fMHz\n",binFrequency/1000000);
+				
+		ptr = strtok(str, ",");
+		//printf( "Frequency:  %s\n", ptr );
+		binFrequency = atof ( ptr );
+		ptr = strtok(NULL, ",");
+		//printf( "Level:  %s\n", ptr );	
+		ptr = strtok(NULL, ",");	
+		//printf( "Lat %s\n", ptr );
+		lat = atof ( ptr );
+		ptr = strtok(NULL, ",");	
+		//printf( "Lon %s\n", ptr ); 
+		lng = atof ( ptr);
+		
+		if ( lat == 0 )
+		{
+			//printf("zero lat lat%f, long%f\n",lat,lng);
+			continue; // ignore, get the next record
+		}
+		
+		distance =  geoDistance(startLat, startLng, lat, lng, 'K');
+		if ( distance > AMS_LOCATION_MOVE_DISTANCE )
+		{
+			startLat = lat;
+			startLng = lng; 
+			validSignalsTotal = openLicenseCsv( validSignals, lat, lng );
+			printf("Location moved by %.1fkm, Found %d license records within %dkm of the sensor location at %f and %f\n",distance, validSignalsTotal,LICENSE_DISTANCE, lat, lng);
+		}
+
 		if ( testFrequency ( binFrequency, validSignals, validSignalsTotal ) )
 		{
 			//printf("****Valid : %s\n",str);
