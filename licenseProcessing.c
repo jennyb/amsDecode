@@ -391,7 +391,10 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 	
 	// add other exclusions 
 	list[frequencyCounter].lowFrequency = 1000000;
-	list[frequencyCounter].highFrequency = 50000000;
+	list[frequencyCounter].highFrequency = 52000000;	//HF up to top of 6m Band
+	frequencyCounter++;
+	list[frequencyCounter].lowFrequency = 70000000;		//4m Amateur band
+	list[frequencyCounter].highFrequency = 71000000;
 	frequencyCounter++;
 	list[frequencyCounter].lowFrequency = 88000000;		//VHF FM broadcast
 	list[frequencyCounter].highFrequency = 108000000;	

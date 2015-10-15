@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 {
 	double lat, lng, startLat, startLng, distance ;
 	double binFrequency;
-	char str[HIT_LINE_LEN];
+	char str[HIT_LINE_LEN], resultStr[HIT_LINE_LEN];
 	char *ptr;
 	FILE *fh;
 	uint32_t validSignalsTotal;
@@ -389,7 +389,8 @@ int main(int argc, char *argv[])
 
 	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL  ) 
 	{
-		//89.675000, 37.460000, 52.658178, 1.721563, Wed Sep 25 18:29:30 2013	
+		//89.675000, 37.460000, 52.658178, 1.721563, Wed Sep 25 18:29:30 2013
+		strcpy ( resultStr, str );	
 		ptr = strtok(str, ",");
 		binFrequency = 1000000 * atof ( ptr );
 		ptr = strtok(NULL, ",");
@@ -403,7 +404,7 @@ int main(int argc, char *argv[])
 		
 		if ( lat == 0 )
 		{
-			printf("zero lat lat%f, long%f\n",lat,lng);
+			//printf("zero lat lat%f, long%f\n",lat,lng);
 			continue; // ignore, get the next record
 		}
 		
@@ -424,7 +425,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			//printf("--Invalid : %s\n",str);
-			fputs(str,results);
+			fputs(resultStr,results);
 			inValidHits++;
 		}
 	}

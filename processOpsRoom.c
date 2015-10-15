@@ -21,6 +21,8 @@
 typedef struct {
 	float  		level;
 	uint16_t 	occ;
+	double 		lat;
+	double		lng;
 } readingStr ;
 
 typedef struct {
@@ -68,6 +70,9 @@ int main(int argc, char **argv)
 	time_t minTime=9999999999, maxTime=0, tmpTime;
 	double occupancy;
 	double rssi;
+	double lat, lng;
+	double slotLat[MAX_TIME/TIME_SLICE];
+	double slotLng[MAX_TIME/TIME_SLICE];
 	 
 
 	fh = fopen("exceptions.csv","rb");
@@ -137,7 +142,7 @@ int main(int argc, char **argv)
 	printf("Found %d unique frequencies\n",maxFrequency);
 	printf("Earliest reading is %s",ctime(&minTime));
 	printf("Last reading is at %s", ctime(&maxTime));	
-	printf("Number of seconds difference is %f and number of 15 minute slots is %f\n", difftime(maxTime, minTime),  difftime(maxTime, minTime)/(60*15));
+	printf("Number of 15 minute slots is %f\n", difftime(maxTime, minTime)/(60*15));
 		
 	// malloc for database for frequency storage 
 	frequencies=malloc(sizeof(frequencyStr) *  maxFrequency);
@@ -200,10 +205,10 @@ int main(int argc, char **argv)
 		rssi = atof ( ptr );	
 		ptr = strtok(NULL, ",");	
 		//printf( "Lat %s\n", ptr );
-		//lat = atof ( ptr );
+		lat = atof ( ptr );
 		 ptr = strtok(NULL, ",");	
 		//printf( "Lon %s\n", ptr ); 
-		//lng = atof ( ptr );
+		lng = atof ( ptr );
 		ptr = strtok(NULL, ",");
 		
 		strptime(ptr+1, "%a %b %d %H:%M:%S %Y", &tm);
@@ -224,7 +229,10 @@ int main(int argc, char **argv)
 			{
 				frequencyFound = 1;
 				// work out time for this reading and assign it to the correct time slice
-				frequencies[frequencyCounter].reading[slot].occ++;					
+				frequencies[frequencyCounter].reading[slot].occ++;
+				// take the lat/long at add it to the slot info
+				slotLat[slot] = lat;
+				slotLng[slot] = lng;					
 				if ( rssi > frequencies[frequencyCounter].reading[slot].level )
 				{
 					//printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
@@ -252,6 +260,13 @@ int main(int argc, char **argv)
 		info = localtime( &tmpTime );
 		strftime(str,80,"%H:%M", info);
 		fprintf(results, "%s,", str);
+	}
+	fprintf(results, "\n");
+	
+	fprintf(results, "0,");
+	for ( slot = 0; slot < maxSlot; slot++ )
+	{
+		fprintf(results, "%f %f,",slotLat[slot],slotLng[slot] );
 	}
 	fprintf(results, "\n");
 	
