@@ -11,7 +11,7 @@
 #include "licenseProcessing.h"
 
 
-#define VERSION 0.3
+#define VERSION 0.5
 #define GNUPLOT "gnuplot -persist"
 
 #define LICENSE_DB_EN 0
@@ -420,8 +420,6 @@ int main(int argc, char *argv[])
 	}
 
 
-
-
 	// open file for full spectrum storage
 	//outSpecFile=fopen("fullSpecData.csv","w");
 	//if (outSpecFile==NULL)
@@ -468,7 +466,6 @@ int main(int argc, char *argv[])
 			hitsDb[i].time = 0;
 		} 
 	}
-	
 
 	fread(&version,sizeof(version),1,fh);       //printf("Version, %d\n", version);
 	fread(&startFreq,sizeof(startFreq),1,fh);   //printf("Start Frequency, %gMHz\n", startFreq/1000000);
@@ -601,18 +598,29 @@ int main(int argc, char *argv[])
 		fread(&richardTime,sizeof(richardTime),1,fh);       //printf("Time %s", ctime(&time));
 		if ( ! binBug )
 		{
-			fread(&ampPoints,sizeof(ampPoints2),1,fh);       	//printf("Amplitude Points: %d,",ampPoints2 );
+			fread(&ampPoints2,sizeof(ampPoints2),1,fh);       	//printf("Amplitude Points: %d,",ampPoints2 );
 		}
 		fread(&numAve,sizeof(numAve),1,fh);         		//printf("Number of averages: %d\n",numAve );
 		fread(&overload,sizeof(overload),1,fh);     		 //printf("Overload: %d\n", overload);
 		fread(&ampPoints,sizeof(ampPoints),1,fh);     		//printf("Amplitude Points(2): %d\n",ampPoints );
 
+		if ( ampPoints > 11703 )
+		{
+			printf("ampPoints greater than 11703 with a value of %d. This probably means a corrupt .bin file\n", ampPoints );
+			exit(1);
+		}
+		
+		if ( (blkStartFx < 10000000) || (blkStartFx > 4000000000) ) 
+		{
+			printf("Block start frequency greater out of range with a value of %f. This probably means a corrupt .bin file\n", blkStartFx );
+			exit(1);
+		}
 		//printf("Latitude: %f, Longitude: %f, ampPoints: %d, ampPoints2: %d, binsPerSegment %d, RBW: %fkHz \n",LatPosition, LonPosition, ampPoints, ampPoints2, binsPerSpan, freqRbw/1000);
 		
 		if ( overload )
 		{
 			spanOverload = 1;
-			printf("Overload flag from Agilent Sensor detected on spectrum number %d, frequency Segment %f at location Lat/Long %f,%f\n",spectrumCount,blkStartFx,LatPosition,LonPosition );
+			printf("Overload flag from Agilent Sensor detected on spectrum number %d, frequency Segment %f at location Lat/Long %f,%f\n",spectrumCount,blkStartFx/1000000,LatPosition,LonPosition );
 		}
 		
 		for ( i = 0; i < ampPoints ; i++ )
