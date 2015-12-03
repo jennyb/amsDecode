@@ -262,43 +262,40 @@ int main(int argc, char *argv[])
 		{
 			if ( (blkStartFx > 10000000) || (blkStartFx < 4000000000) ) // make sure the start frequency of the block is between 10MHz and 4GHz  
 			{
-				if ( !overload || segmentOverload)
-				{
-					// now we have the number of amplitude points, read them in until we reach the end of the expected number. We should then have a new spectral header 
-					for ( i = 0; i < ampPoints ; i++ )
-					{ 
-						fread(&ampValue,sizeof(ampValue),1,fh); 
-						ampFx = ( blkStartFx + ( i * freqRbw));
-						
-						//sort into 12.5kHz channel				
-						//ampFx =  12500 * (uint32_t)(( ampFx + 6250 ) / 12500);
-						
-						if ((ampFx >= startFx ) && ( ampFx <= stopFx ))	
-						{
-							if ( cmdLatPosition || cmdLonPosition )  // we can pick up a lat/lon from the command line and overide the reported position
-							{
-								LatPosition = cmdLatPosition;
-								LonPosition = cmdLonPosition;
-							}
-
-							ampValueDBm = (double)ampValue/50-174;
-
-							if ( (ampValueDBm > hitThreshold)  && ( LatPosition || LonPosition ))
-							{
-								fprintf( of, "%f, %3.1f, %f, %f, %s", ampFx/1000000, ampValueDBm, LatPosition, LonPosition, ctime(&time) ) ;
-							}
-						}
-						else
-						{  
-							binCounter++;
-						} // Frequency within the limits set from the command line
-					} // for all ampPoints
-				} // if overloaded
-				else
+				if ( overload )
 				{
 					segmentOverload=1;
 					printf("Overload flag from Agilent Sensor detected on spectrum number %d, frequency Segment %f at location Lat/Long %f,%f\n",spectrumCount,blkStartFx/1000000,LatPosition,LonPosition );
-				}
+				}	
+				// now we have the number of amplitude points, read them in until we reach the end of the expected number. We should then have a new spectral header 
+				for ( i = 0; i < ampPoints ; i++ )
+				{ 
+					fread(&ampValue,sizeof(ampValue),1,fh); 
+					ampFx = ( blkStartFx + ( i * freqRbw));
+					
+					//sort into 12.5kHz channel				
+					//ampFx =  12500 * (uint32_t)(( ampFx + 6250 ) / 12500);
+					
+					if ((ampFx >= startFx ) && ( ampFx <= stopFx ))	
+					{
+						if ( cmdLatPosition || cmdLonPosition )  // we can pick up a lat/lon from the command line and overide the reported position
+						{
+							LatPosition = cmdLatPosition;
+							LonPosition = cmdLonPosition;
+						}
+
+						ampValueDBm = (double)ampValue/50-174;
+
+						if ( (ampValueDBm > hitThreshold)  && ( LatPosition || LonPosition ) && (!segmentOverload) )
+						{
+							fprintf( of, "%f, %3.1f, %f, %f, %s", ampFx/1000000, ampValueDBm, LatPosition, LonPosition, ctime(&time) ) ;
+						}
+					}
+					else
+					{  
+						binCounter++;
+					} // Frequency within the limits set from the command line
+				} // for all ampPoints
 			} // blockstart or stop frequency incorrect
 			else
 			{ 
