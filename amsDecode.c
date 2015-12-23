@@ -10,8 +10,8 @@
 #include "licenseProcessing.h"
 
 
-#define VERSION 0.6
-#define GNUPLOT "gnuplot -persist"
+#define VERSION 0.7
+
 
 #define LICENSE_DB_EN 0
 #define GNUPLOT_EN 0

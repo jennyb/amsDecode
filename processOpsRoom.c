@@ -98,6 +98,7 @@ int main(int argc, char **argv)
 		ptr = strtok(str, ",");
 		//printf( "Frequency:  %s\n", ptr );
 		
+		// compare the latest frequency to all the frequencies found. If it is not in the list then add a new one
 		binFrequency = 1000000 * atof ( ptr );
 		for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
 		{
@@ -108,6 +109,7 @@ int main(int argc, char **argv)
 				//break; 
 			}
 		}
+		// add a new frequency 
 		if ( ! frequencyFound )
 		{
 			testFx[maxFrequency].frequency = binFrequency;
@@ -116,6 +118,7 @@ int main(int argc, char **argv)
 		}
 		frequencyFound = 0;
 
+		//Ignore all the fields on the first pass apart from frequency and time
 		ptr = strtok(NULL, ",");
 		//printf( "Level:  %s\n", ptr );	
 		ptr = strtok(NULL, ",");	
@@ -128,7 +131,8 @@ int main(int argc, char **argv)
 		//printf("string: %s\n",ptr);
 		strptime(ptr+1, "%a %b %d %H:%M:%S %Y", &tm);
 		readingTime=mktime(&tm);
-
+		
+		// work out the earliest reading and latest reading	
 		if ( readingTime < minTime )
 		{
 			minTime = readingTime;
@@ -188,6 +192,13 @@ int main(int argc, char **argv)
 
 	rewind(fh);
 
+	for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
+	{
+		for ( slot = 0; slot < maxSlot; slot++ )
+		{
+			frequencies[frequencyCounter].reading[slot].level = -127 ;
+		}
+	}	
 
 	//for each line, add this to the approriate slot
 	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL ) 
@@ -216,10 +227,7 @@ int main(int argc, char **argv)
 		
 		slot = (difftime(readingTime, minTime)/(60*15));
 
-		//for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter++ )
-		//{
-		//	frequencies[frequencyCounter].reading[slot].level = -127 ;
-		//}		
+	
 		
 		
 		// wander up the frequency list until we get to the frequency we have found 
@@ -230,12 +238,12 @@ int main(int argc, char **argv)
 				frequencyFound = 1;
 				// work out time for this reading and assign it to the correct time slice
 				frequencies[frequencyCounter].reading[slot].occ++;
-				// take the lat/long at add it to the slot info
+				// take the lat/long and add it to the slot info
 				slotLat[slot] = lat;
 				slotLng[slot] = lng;					
 				if ( rssi > frequencies[frequencyCounter].reading[slot].level )
 				{
-					//printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
+					printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
 					frequencies[frequencyCounter].reading[slot].level = rssi ;
 				}
 				break; 
