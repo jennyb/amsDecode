@@ -234,7 +234,7 @@ uint32_t openLicenseCsv ( signalListStruct list[], double lat, double lng)
 					//printf("%s",str);
 					ptr = strtok(str, ","); 
 					ptr = strtok(NULL, ",");  // License Number
-					licenseLatitude = atof(ptr); // Lat
+					licenseLatitude = atof(ptr); // Lat172.16.50.43
 					//printf( " %f", licenseLatitude );
 					ptr = strtok(NULL, ","); // Long
 					licenseLongitude = atof(ptr);

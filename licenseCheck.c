@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 	}
 
 	
-	fh = fopen("specData.csv","rb");
+	fh = fopen("channelise.csv","rb");
 	if (!fh) 
 	{
 		printf("Can't open file specData.csv\n");
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
 		ptr = strtok(NULL, ",");
 		//printf( "Level:  %s\n", ptr );	
 		ptr = strtok(NULL, ",");	
-		//printf( "Lat %s\n", ptr );
+		//printf( "Lat %s\n", ptr );172.16.50.43
 		lat = atof ( ptr );
 		ptr = strtok(NULL, ",");	
 		//printf( "Lon %s\n", ptr ); 
