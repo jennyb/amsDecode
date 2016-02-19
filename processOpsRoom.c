@@ -11,12 +11,14 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <unistd.h>
 
 
 #define MAX_NUMBER_OF_FREQUENCIES 400000
 #define MAX_TIME 24 * 60 * 60 
 #define TIME_SLICE 60 * 15
 #define HIT_LINE_LEN 100
+#define VERSION 0.3
 
 typedef struct {
 	float  		level;
@@ -37,11 +39,6 @@ typedef struct {
 
 
 
-//int fxCmpFunc (const void * a, const void * b)
-//{
-//   return ( *(double*)a - *(double*)b );
-//}
-
 int fxCmpFunc ( const void *arg1, const void *arg2)
 {
 	const frequencyCount *a = arg1;
@@ -52,6 +49,16 @@ int fxCmpFunc ( const void *arg1, const void *arg2)
 }
 
 
+void displayHelp(void)
+{
+	printf("processOpsRoom Version:%2.1f\n", VERSION);
+	printf("Display the file exceptions.csv in a format that is compatible with a spreadsheet\n");
+	printf("Usage: processOpsRoom [-t]\n");
+	printf("Where the options are :\n");  
+	printf("-t minimum percentage to display\n");
+	exit (0);	
+}
+
 
 int main(int argc, char **argv)
 {
@@ -59,7 +66,7 @@ int main(int argc, char **argv)
 	char str[HIT_LINE_LEN];
 	frequencyCount testFx[MAX_NUMBER_OF_FREQUENCIES]; 
 	double binFrequency;
-	uint32_t frequencyCounter = 0, maxFrequency = 1, finalMaxFrequency=0; 
+	uint32_t frequencyCounter = 0, maxFrequency = 0, finalMaxFrequency=0; 
 	uint16_t frequencyFound=0;
 	uint16_t slot, maxSlot=0;
 	frequencyStr *frequencies;
@@ -73,7 +80,53 @@ int main(int argc, char **argv)
 	double lat, lng;
 	double slotLat[MAX_TIME/TIME_SLICE];
 	double slotLng[MAX_TIME/TIME_SLICE];
+	float  slotOccupancy;
+	float  minOccupancy;
+	int c;
 	 
+
+    opterr = 0;
+     
+    while ((c = getopt (argc, argv, "h?t:")) != -1)
+		switch (c)
+	{
+		case 't':  // minimum percentage threshold
+			minOccupancy = atof(optarg);
+				printf("Minimum occupancy percentage displayed:%2.1f\n",minOccupancy);
+			break;
+							
+		case '?':
+		case 'h':	
+			displayHelp();
+			break;
+			
+		default:
+			abort ();
+	}
+     
+     
+	//index = optind;
+	
+	//if (index  < argc ) 
+	//{
+//		filename = argv[index++];
+//	}
+//	else          
+//	{
+//		displayHelp();
+//		exit(0);
+//	}
+	
+//	if (index < argc )
+//	{
+//		startFx = (atof(argv[index++])) * 1000000;
+ //	}
+	//if (index < argc )
+//	{
+//		stopFx = (atof(argv[index++])) * 1000000;
+//	}       
+
+	printf("processOpsRoom Version:%2.1f\n", VERSION);
 
 	fh = fopen("exceptions.csv","rb");
 	if (!fh) 
@@ -105,6 +158,7 @@ int main(int argc, char **argv)
 			if ( binFrequency == testFx[frequencyCounter].frequency )
 			{
 				testFx[frequencyCounter].count++;
+				//printf("Found Frequency:%fMHz again,hits so far:%d \n",binFrequency/1000000,testFx[frequencyCounter].count);
 				frequencyFound = 1;
 				//break; 
 			}
@@ -114,6 +168,7 @@ int main(int argc, char **argv)
 		{
 			testFx[maxFrequency].frequency = binFrequency;
 			testFx[maxFrequency].count = 1;			
+			//printf("Found New Frequency number:%d Frequency:%fMHz\n",maxFrequency,testFx[maxFrequency].frequency/1000000);
 			maxFrequency++;	
 		}
 		frequencyFound = 0;
@@ -169,7 +224,7 @@ int main(int argc, char **argv)
 
 	//for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter ++ )
 	//{
-	//	printf( "Frequency: %f,  Count:  %d\n", testFx[frequencyCounter].frequency/1000000, testFx[frequencyCounter].count );
+	//	printf( "testFx Array: Frequency: %f,  Count:  %d\n", testFx[frequencyCounter].frequency/1000000, testFx[frequencyCounter].count );
 	//} 
 
 	
@@ -182,11 +237,11 @@ int main(int argc, char **argv)
 	for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter ++ )
 	{
 
-		if ( testFx[frequencyCounter].count > 10 )
+		if ( testFx[frequencyCounter].count )
 		{
 			//printf( "Frequency: %f,  Count:  %d\n", testFx[frequencyCounter].frequency/1000000, testFx[frequencyCounter].count );
-			finalMaxFrequency++;
 			frequencies[finalMaxFrequency].frequency = testFx[frequencyCounter].frequency;
+			finalMaxFrequency++;
 		}
 	} 
 
@@ -235,6 +290,7 @@ int main(int argc, char **argv)
 		{
 			if ( binFrequency == frequencies[frequencyCounter].frequency )
 			{
+				//printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
 				frequencyFound = 1;
 				// work out time for this reading and assign it to the correct time slice
 				frequencies[frequencyCounter].reading[slot].occ++;
@@ -243,7 +299,7 @@ int main(int argc, char **argv)
 				slotLng[slot] = lng;					
 				if ( rssi > frequencies[frequencyCounter].reading[slot].level )
 				{
-					printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
+					// printf( "Frequency Found; rssi Level:%f, existing rssi:%f, frequency:%f\n", rssi, frequencies[frequencyCounter].reading[slot].level, frequencies[frequencyCounter].frequency );
 					frequencies[frequencyCounter].reading[slot].level = rssi ;
 				}
 				break; 
@@ -260,7 +316,7 @@ int main(int argc, char **argv)
 	}
 	
 	// now print out the results
-	// header
+	// time header
 	fprintf(results, "0,");
 	for ( slot = 0; slot < maxSlot; slot++ )
 	{
@@ -271,6 +327,7 @@ int main(int argc, char **argv)
 	}
 	fprintf(results, "\n");
 	
+	// Location header
 	fprintf(results, "0,");
 	for ( slot = 0; slot < maxSlot; slot++ )
 	{
@@ -278,40 +335,61 @@ int main(int argc, char **argv)
 	}
 	fprintf(results, "\n");
 	
-	for ( frequencyCounter = 1; frequencyCounter < finalMaxFrequency; frequencyCounter++)
+	for ( frequencyCounter = 0; frequencyCounter < finalMaxFrequency; frequencyCounter++)
 	{
-		fprintf(results, "%f,",frequencies[frequencyCounter].frequency/1000000);
+		slotOccupancy = 0;
 		for ( slot = 0; slot < maxSlot; slot++ )
 		{
-			// we have a problem working out percentage occupancy here
-			// we don't know how many bins make a channel ( 7-8 on current setup ), and how many scans per 15 minutes
-			// The test system scans about once every 8 seconds - this will vary depending on scanned bandwidth
-			// so the max could be 675 - depending on modulation 
-			// so, lets assume 2 bins would get the majority, over 90 scans = 180
-			// and not let value go over 100. This is a fudge. 
-			occupancy = 100 * frequencies[frequencyCounter].reading[slot].occ/180;
-			if ( occupancy > 100 )
+			//check each slot for occupancy. If none are above the occupancy threshold then throw away the whole line
+			occupancy = 100 * frequencies[frequencyCounter].reading[slot].occ/900;
+			if ( occupancy > slotOccupancy )
 			{
-				occupancy = 100;
+				slotOccupancy = occupancy;
 			}
-			else if ( occupancy == 0 )
+		}
+		
+		
+		if ( slotOccupancy > minOccupancy )
+		{
+			// print the first field : Frequency
+			fprintf(results, "%fMHz,",frequencies[frequencyCounter].frequency/1000000);
+			for ( slot = 0; slot < maxSlot; slot++ )
 			{
-				if ( frequencies[frequencyCounter].reading[slot].occ )
+				// we have a problem working out percentage occupancy here
+				// assuming channelise reduces the results to 1 per second
+				// we have 900 possible seconds to find hits
+				// and not let value go over 100. This is a fudge. 
+				occupancy = 100 * frequencies[frequencyCounter].reading[slot].occ/900;
+				if ( occupancy > 100 )
 				{
-					occupancy = 1;  // so that we don't have a row of zeros
+					occupancy = 100;
+				}
+				else if ( occupancy == 0 )
+				{
+					if ( frequencies[frequencyCounter].reading[slot].occ )
+					{
+						occupancy = 0;  // so that we don't have a row of zeros
+					}
+				}
+				fprintf(results,"%2.1f%%,",occupancy );
+			} 
+			fprintf(results,"\n");
+			
+			fprintf(results," ,");
+			// now print signal strengths
+			for ( slot = 0; slot < maxSlot; slot++ )
+			{
+				if (frequencies[frequencyCounter].reading[slot].level > -120 )
+				{
+					fprintf(results,"%2.1fdBm,", frequencies[frequencyCounter].reading[slot].level);
+				}
+				else
+				{
+					fprintf(results,",");
 				}
 			}
-			fprintf(results,"%2.1f,",occupancy );
-		} 
-		fprintf(results,"\n");
-		
-		fprintf(results," ,");
-		// now print signal strengths
-		for ( slot = 0; slot < maxSlot; slot++ )
-		{
-			fprintf(results,"%2.1f,", frequencies[frequencyCounter].reading[slot].level);
+			fprintf(results,"\n");
 		}
-		fprintf(results,"\n");
 	}
 	
 	
