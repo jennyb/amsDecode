@@ -18,7 +18,7 @@
 #define MAX_TIME 24 * 60 * 60 
 #define TIME_SLICE 60 * 15
 #define HIT_LINE_LEN 100
-#define VERSION 0.3
+#define VERSION 0.4
 
 typedef struct {
 	float  		level;
@@ -64,12 +64,12 @@ int main(int argc, char **argv)
 {
 	FILE *fh, *results;
 	char str[HIT_LINE_LEN];
-	frequencyCount testFx[MAX_NUMBER_OF_FREQUENCIES]; 
+	frequencyCount *testFx; 
+	frequencyStr *frequencies;	
 	double binFrequency;
 	uint32_t frequencyCounter = 0, maxFrequency = 0, finalMaxFrequency=0; 
 	uint16_t frequencyFound=0;
 	uint16_t slot, maxSlot=0;
-	frequencyStr *frequencies;
 	char *ptr;
 	struct tm tm;
 	struct tm *info;
@@ -105,27 +105,6 @@ int main(int argc, char **argv)
 	}
      
      
-	//index = optind;
-	
-	//if (index  < argc ) 
-	//{
-//		filename = argv[index++];
-//	}
-//	else          
-//	{
-//		displayHelp();
-//		exit(0);
-//	}
-	
-//	if (index < argc )
-//	{
-//		startFx = (atof(argv[index++])) * 1000000;
- //	}
-	//if (index < argc )
-//	{
-//		stopFx = (atof(argv[index++])) * 1000000;
-//	}       
-
 	printf("processOpsRoom Version:%2.1f\n", VERSION);
 
 	fh = fopen("exceptions.csv","rb");
@@ -142,6 +121,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
+	// malloc for database for frequency storage
+	testFx=malloc(sizeof(frequencyCount) *  MAX_NUMBER_OF_FREQUENCIES);
+	if ( ! frequencies )
+	{
+		printf("Failed to allocate frequency storage\n");
+		exit(1);
+	}
 	
 	// first pass to find every distinct frequency and time span
 	while ( fgets (str, HIT_LINE_LEN, fh) !=NULL ) 
@@ -203,6 +189,7 @@ int main(int argc, char **argv)
 	printf("Last reading is at %s", ctime(&maxTime));	
 	printf("Number of 15 minute slots is %f\n", difftime(maxTime, minTime)/(60*15));
 		
+	
 	// malloc for database for frequency storage 
 	frequencies=malloc(sizeof(frequencyStr) *  maxFrequency);
 	if ( ! frequencies )
@@ -211,7 +198,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	//initialise it 
+		//initialise it 
 	for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter ++ )
 	{
 		for ( slot = 0; slot < maxSlot; slot ++ )
@@ -222,14 +209,7 @@ int main(int argc, char **argv)
 	
 	maxSlot = difftime(maxTime, minTime)/(60*15);
 
-	//for ( frequencyCounter = 0; frequencyCounter < maxFrequency; frequencyCounter ++ )
-	//{
-	//	printf( "testFx Array: Frequency: %f,  Count:  %d\n", testFx[frequencyCounter].frequency/1000000, testFx[frequencyCounter].count );
-	//} 
 
-	
-	// sort the exclusion database
-	//qsort ( testFx, maxFrequency, sizeof(double), fxCmpFunc); 
 	qsort ( testFx, maxFrequency, sizeof(frequencyCount) , fxCmpFunc); 
 	
 
@@ -273,7 +253,7 @@ int main(int argc, char **argv)
 		//printf( "Lat %s\n", ptr );
 		lat = atof ( ptr );
 		 ptr = strtok(NULL, ",");	
-		//printf( "Lon %s\n", ptr ); 
+		//printf( "Lon %s\n", ptr); 
 		lng = atof ( ptr );
 		ptr = strtok(NULL, ",");
 		
@@ -391,8 +371,9 @@ int main(int argc, char **argv)
 			fprintf(results,"\n");
 		}
 	}
-	
-	
+	free(testFx);
+	free(frequencies);
+		
 	return 0;
 }
 
