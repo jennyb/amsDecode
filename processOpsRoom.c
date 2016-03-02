@@ -18,7 +18,7 @@
 #define MAX_TIME 24 * 60 * 60 
 #define TIME_SLICE 60 * 15
 #define HIT_LINE_LEN 100
-#define VERSION 0.4
+#define VERSION 0.5
 
 typedef struct {
 	float  		level;
@@ -123,9 +123,9 @@ int main(int argc, char **argv)
 	
 	// malloc for database for frequency storage
 	testFx=malloc(sizeof(frequencyCount) *  MAX_NUMBER_OF_FREQUENCIES);
-	if ( ! frequencies )
+	if ( ! testFx )
 	{
-		printf("Failed to allocate frequency storage\n");
+		printf("Failed to allocate testFx frequency storage.");
 		exit(1);
 	}
 	
