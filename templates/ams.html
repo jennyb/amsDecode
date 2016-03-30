@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<b><br>
+<form action="{{ url_for('ams') }}" method=post>
+
+{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+
+<fieldset>
+<legend>Directory</legend>
+Select the directory to process:
+<div id=filetree_id></div>
+</fieldset>
+<br/>
+
+<fieldset>
+<legend>Paramaters</legend>
+<table border=0>
+<tr>
+  <th>Directory</th><td><input size=50 name="subdirname"  id=subdirname readonly></td>
+</tr>
+<tr>
+  <th>Min Frequency (MHz)</th><td><input name="min_freq" value=68></td>
+</tr>
+<tr>
+  <th>Max Frequency (MHz)</th><td><input name="max_freq" value=468></td>
+</tr>
+<tr>
+  <th>Threshold (dBm)</th><td><input name="threshold" value=-95></td>
+</tr>
+</table>
+</fieldset>
+<br/>
+
+
+<fieldset>
+<legend>Process</legend>
+<input type="submit" value="Start Processing">
+</fieldset>
+
+
+
+
+</form>
+
+<script>
+    $(document).ready( function() {
+        $('#filetree_id').fileTree({ root: '/home', script: 'jqueryFileTree', multiFolder: false }, 
+                                    function(file) {
+                                        var subdir = file;
+                                        if (file.lastIndexOf('/') > -1) {
+                                            subdir = file.substr(0,file.lastIndexOf('/')+1)
+                                        }
+                                        $('#subdirname').val(subdir);
+                                    });
+    });
+</script>
+
+{% endblock %}
+
