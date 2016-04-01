@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<b><br>
+<form action="{{ url_for('ams') }}" method=post>
+
+{% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+
+<fieldset>
+<legend>Directory</legend>
+Select the directory to process:
+<div id=filetree_id></div>
+</fieldset>
+<br/>
+
+<fieldset>
+<legend>Parameters</legend>
+<table border=0>
+<tr>
+  <th>Directory</th><td><input size=50 id=subdirname readonly></td>
+</tr>
+<tr>
+  <th>Min Frequency (MHz)</th><td><input id=min_freq value=68></td>
+</tr>
+<tr>
+  <th>Max Frequency (MHz)</th><td><input id=max_freq value=468></td>
+</tr>
+<tr>
+  <th>Threshold (dBm)</th><td><input id=threshold value=-95></td>
+</tr>
+</table>
+</fieldset>
+<br/>
+
+
+<fieldset>
+<legend>Process</legend>
+<button type="button" onclick="start_processing();">Start Processing</button>
+<table>
+<tr>
+    <th>amsDecode</th>
+    <td>
+        <div id=amsdecode_progress style="display:none;"><img src=/static/images/progress_bar.gif></div>
+        <div id=amsdecode_ok style="display:none; color:green;">Success</div>
+        <div id=amsdecode_fail style="display:none;">Failed</div>
+    </td>
+</tr>
+<tr>
+    <th>Channalise</th>
+    <td>
+        <div id=channalise_progress style="display:none;"><img src=/static/images/progress_bar.gif></div>
+        <div id=channalise_ok style="display:none; color:green">Success</div>
+        <div id=channalise_fail style="display:none; color:red">Failed</div>
+    </td>
+</tr>
+<tr>
+    <th>License Check</th>
+    <td>
+        <div id=licensecheck_progress style="display:none;"><img src=/static/images/progress_bar.gif></div>
+        <div id=licensecheck_ok style="display:none; color:green">Success</div>
+        <div id=licensecheck_fail style="display:none; color:red">Failed</div>
+    </td>
+</tr>
+<tr>
+    <th>Post-Processing</th>
+    <td>
+        <div id=processopsroom_progress style="display:none;"><img src=/static/images/progress_bar.gif></div>
+        <div id=processopsroom_ok style="display:none; color:green">Success</div>
+        <div id=processopsroom_fail style="display:none; color:red">Failed</div>
+    </td>
+</tr>
+</table>
+</fieldset>
+
+
+
+
+</form>
+
+<script>
+    $(document).ready( function() {
+        $('#filetree_id').fileTree({ root: '/home', script: 'jqueryFileTree', multiFolder: false }, 
+                                    function(file) {
+                                        var subdir = file;
+                                        if (file.lastIndexOf('/') > -1) {
+                                            subdir = file.substr(0,file.lastIndexOf('/')+1)
+                                        }
+                                        $('#subdirname').val(subdir);
+                                    });
+    });
+
+    function valid_parameters() {
+        var subdir = $('#subdirname').val();
+        if (subdir.length == 0) {
+            alert("You must select a subdirectory first");
+            return 0;
+        }
+        // How do we validate the other values?
+        return 1;
+    }
+
+    function start_processing() {
+        if (!valid_parameters()) return;
+        var data =             {
+                subdir: $('#subdirname').val(),
+                minFreq: $('#min_freq').val(),
+                maxFreq: $('#max_freq').val(),
+                threshold: $('#threshold').val(),
+            };
+
+        $('#amsdecode_progress').show();
+        var amsdecode = $.post(
+            '/amsdecode', data,
+            function(msg) {
+                $('#amsdecode_progress').hide();
+                $('#amsdecode_ok').show();
+                $('#channalise_progress').show();
+                var channalise = $.post('/channalise', data,
+                    function(msg) {
+                        $('#channalise_progress').hide();
+                        $('#channalise_ok').show();
+                        $('#licensecheck_progress').show();
+                        var licensecheck = $.post('/licensecheck', data,
+                            function(msg) {
+                                $('#licensecheck_progress').hide();
+                                $('#licensecheck_ok').show();
+                                $('#processopsroom_progress').show();
+                                var processopsroom = $.post('/processopsroom', data,
+                                    function(msg) {
+                                        $('#processopsroom_progress').hide();
+                                        $('#processopsroom_ok').show();
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        amsdecode.fail(function(msg) {
+            alert("Failed!");
+        });
+
+    }
+
+</script>
+
+{% endblock %}
+
