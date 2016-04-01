@@ -7,6 +7,7 @@ import sys
 import re
 import os
 import urllib
+from time import sleep
 
 app = Flask(__name__)
 
@@ -40,9 +41,39 @@ def index():
 """
 @app.route('/ams', methods=['GET','POST'])
 def ams():
-    if request.method == 'POST':
-        print(request.form)
     return render_template('ams.html')
+
+@app.route('/amsdecode', methods=['GET','POST'])
+def amsdecode():
+    print(request.values)
+    print("Subdir="+request.values['subdir']);
+    print("minFreq="+str(request.values['minFreq']));
+    sleep(5)
+    return "ok"
+
+@app.route('/channalise', methods=['GET','POST'])
+def channalise():
+    print(request.values)
+    print("Subdir="+request.values['subdir']);
+    print("minFreq="+str(request.values['minFreq']));
+    sleep(5)
+    return "ok"
+
+@app.route('/licensecheck', methods=['GET','POST'])
+def licensecheck():
+    print(request.values)
+    print("Subdir="+request.values['subdir']);
+    print("minFreq="+str(request.values['minFreq']));
+    sleep(5)
+    return "ok"
+
+@app.route('/processopsroom', methods=['GET','POST'])
+def processopsroom():
+    print(request.values)
+    print("Subdir="+request.values['subdir']);
+    print("minFreq="+str(request.values['minFreq']));
+    sleep(5)
+    return "ok"
 
 """
     This is called via an Ajax call from jqueryFileTree javascript function
