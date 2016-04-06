@@ -79,7 +79,7 @@ Select the directory to process:
 
 <script>
     $(document).ready( function() {
-        $('#filetree_id').fileTree({ root: '/home', script: 'jqueryFileTree', multiFolder: false }, 
+        $('#filetree_id').fileTree({ root: '/mnt/pinky/baldock/AMS/AMSDriveLogs/', script: 'jqueryFileTree', multiFolder: false }, 
                                     function(file) {
                                         var subdir = file;
                                         if (file.lastIndexOf('/') > -1) {

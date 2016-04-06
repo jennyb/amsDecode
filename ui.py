@@ -7,6 +7,7 @@ import sys
 import re
 import os
 import urllib
+import subprocess
 from time import sleep
 
 app = Flask(__name__)
@@ -45,18 +46,16 @@ def ams():
 
 @app.route('/amsdecode', methods=['GET','POST'])
 def amsdecode():
-    print(request.values)
-    print("Subdir="+request.values['subdir']);
-    print("minFreq="+str(request.values['minFreq']));
-    sleep(5)
+    print("Subdir="+request.values['subdir'])
+    print("minFreq="+str(request.values['minFreq']))
+    print("maxFreq="+str(request.values['maxFreq']))
+    print("Threshold="+str(request.values['threshold']))
+    subprocess.call("/usr/local/bin/processBinFiles.py", cwd=('%s' % request.values['subdir']))
     return "ok"
 
 @app.route('/channalise', methods=['GET','POST'])
 def channalise():
-    print(request.values)
-    print("Subdir="+request.values['subdir']);
-    print("minFreq="+str(request.values['minFreq']));
-    sleep(5)
+    subprocess.call("/usr/local/bin/channelise.py", cwd=('%s' % request.values['subdir']))
     return "ok"
 
 @app.route('/licensecheck', methods=['GET','POST'])
@@ -64,7 +63,7 @@ def licensecheck():
     print(request.values)
     print("Subdir="+request.values['subdir']);
     print("minFreq="+str(request.values['minFreq']));
-    sleep(5)
+    subprocess.call("/usr/local/bin/licenseCheck", cwd=('%s' % request.values['subdir']))
     return "ok"
 
 @app.route('/processopsroom', methods=['GET','POST'])
@@ -72,7 +71,7 @@ def processopsroom():
     print(request.values)
     print("Subdir="+request.values['subdir']);
     print("minFreq="+str(request.values['minFreq']));
-    sleep(5)
+    subprocess.call("/usr/local/bin/processOpsRoom", cwd=('%s' % request.values['subdir']))
     return "ok"
 
 """
